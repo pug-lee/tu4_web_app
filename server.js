@@ -8,6 +8,8 @@ var app = express()
 // add this snippet after "var express = require('express')"
 var axios = require('axios');
 
+// child process for python
+const { spawn } = require('child_process');
 
 // Needed for EJS
 app.set('view engine', 'ejs');
@@ -114,6 +116,35 @@ app.get('/weather', async (req, res) => {
       console.error(error);
       res.send('Error fetching weather data');
     }
+});
+
+app.get('/python', async (req, res) => {
+    const firstNum = 4;
+    const secondNum = 7;
+
+    let dataToSend;
+    // spawn new child process to call the python script 
+    // and pass the variable values to the python script
+    const python = spawn('python', ['scripts/python.py', firstNum , secondNum]);
+    // collect data from script
+    python.stdout.on('data', function (data) {
+        console.log('Pipe data from python script ...');
+        dataToSend = data.toString();
+    });
+    // in close event we are sure that stream from child process is closed
+    python.on('close', (code) => {
+        console.log(`child process close all stdio with code ${code}`);
+        // send data to browser
+        res.send(dataToSend)
+    });
+  
+    /* try {
+      
+      res.render('pages/python', { weather: response.data });
+    } catch (error) {
+      console.error(error);
+      res.send('Error fetching python script data');
+    }*/
 });
 
 
